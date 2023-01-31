@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<title>Multimedia HW</title>
+<head>
+</head>
+
+<body>
+    <canvas id="canvas" width="1000" height="750" style="box-shadow: 0px 0px 20px black;cursor:crosshair;">
+		瀏覽器如果不支援 canvas 元素
+    </canvas>
+    <br><br><input type="text" value="1"><br><br>
+    <input type="submit" value="加一">
+    <input type="submit" value="減一">
+    <script type="text/javascript">
+        var canvas = document.getElementById("canvas");//獲取畫布
+        var ctx=canvas.getContext("2d");
+        
+        //Q9:Create a button of level, and pressing the button can increase or decrease the recursive level.
+        var text = document.getElementsByTagName('input')[0];
+        tree(text.value);
+        var add = document.getElementsByTagName('input')[1];
+        var clear = document.getElementsByTagName('input')[2];
+        //Q1:The number of levelsshould be from 1 to 10
+        add.onclick = function numberadd(){
+            if(text.value>9){
+                text.value=10;  
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                tree(text.value);
+                console.log("x=",x);
+            }else{
+                text.value++;  
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                tree(text.value);
+                }
+        }
+        clear.onclick = function clearnumber(){
+            if(text.value<2){
+                text.value=1;  
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                tree(text.value);
+            }else{
+            text.value--; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            tree(text.value);
+        }
+        }
+
+        
+        function tree(le){ //*畫圖 canvas的座標是從左上(0,0)開始
+        //宣告深度(level)
+        const level = text.value;//maxlevel
+        var n=level;        //現在level
+        var nf=0;             //花level
+
+        //宣告線寬度Q3:The width of the first branch is 15 pixels
+        var lineWidth =15;
+
+        //宣告初始弧度(由角度轉換)
+        var radian=-Math.PI/180*90;
+
+        //宣告初始位置
+        var x0=500;
+        var y0=700;
+
+        //宣告總長度 Q1:the total tree height is always 600 pixels.
+        var length = 600;
+        
+        var x = [];
+        var y = [];
+        
+        var xf = [];
+        var yf = [];
+            
+        var xp = [];
+        var yp = [];
+
+
+        //宣告花直徑 
+        //Q6:The initial flower is one circle with 30 pixels diameter and the width is 4 pixels.
+        var diameter = 30;
+        //宣告花線寬度
+        var FlineWidth =4;
+
+        //繪圖
+        draw(n,x0,y0,length,radian,lineWidth);
+
+        function draw(n,x0,y0,length,radian,lineWidth){
+            //(層數,起始座標x0,起始座標y0,總高,初始弧度,線寬)
+
+        if(n <= 0)//因為是遞迴，所以要在等於0時結束
+        return;
+        //Q1:Branch must stop growing when the number of levels is greater than 7
+        if(n>7){
+            nf=n-7;//計算開花層數
+            n=7;
+        }
+
+        var newlength = length/sumH(n); //計算高(由最下層exH7開始...) //總長度/全體對此層比例exH7=此層
+
+        //Q4:The angle between branches should be 30 degrees to the left and 30 degrees to the right
+        var x1=x0+newlength*Math.cos(radian);//計算x1座標
+        var y1=y0+newlength*Math.sin(radian);//計算y1座標
+
+        if(n ==1){ //紀錄花的座標
+            x.push(x1);
+            y.push(y1);
+        }
+
+        drawline(x0,y0,x1,y1,n,newlength);
+
+        if(n<=7){    
+            //length-newlength 總長度-已計算此層長度
+            //radian+Math.PI/180*30 當前弧度+30度的弧度
+            draw(n-1,x1,y1,length-newlength,radian+Math.PI/180*30,lineWidth);//畫右邊分支
+            //radian+Math.PI/180*30 當前弧度-30度的弧度
+            draw(n-1,x1,y1,length-newlength,radian-Math.PI/180*30,lineWidth);//畫左邊分支
+        }
+        //Q5:When the level is 8, the fractal flower will bloom on the end to the branch. The flower is constructed by circles 
+        if(nf>0&n==1&x.length==64){
+            drawcircle(nf,x,y,diameter,FlineWidth)
+           }
+        }
+
+        function drawcircle(nf,x,y,diameter,FlineWidth){
+            console.log(nf)
+            if(nf <= 0)//因為是遞迴，所以要在等於0時結束
+            return;
+            ctx.strokeStyle="#FF00FF";//設定顏色
+            ctx.lineWidth = FlineWidth;
+
+            for(let i = 0; i<x.length;i++){
+                ctx.beginPath();
+                ctx.arc(x[i],y[i],diameter/2,0,2*Math.PI);//(x,y,r,開始角度,弧度)
+                ctx.stroke();
+            }
+
+            //計算開花座標
+            //Q8:The next level flower has 6 petals (circle), which means you should make it bloom from six different directions, and the difference between two neighboring directions is 60 degrees.
+            xf=[];
+            for(let i =0; i<x.length;i++){
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90+Math.PI/180*90));
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90+Math.PI/180*30));
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90-Math.PI/180*30));
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90-Math.PI/180*90));
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90-Math.PI/180*150));
+                xf.push(x[i]+(diameter*1/2)*Math.cos(-Math.PI/180*90+Math.PI/180*150));
+            }
+            xp=xf;
+            x=xp;
+            
+            yf=[]; 
+            for(let i =0; i<y.length;i++){
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90+Math.PI/180*90));
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90+Math.PI/180*30));
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90-Math.PI/180*30));
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90-Math.PI/180*90));  
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90-Math.PI/180*150));
+                yf.push(y[i]+(diameter*1/2)*Math.sin(-Math.PI/180*90+Math.PI/180*150));
+            }
+            yp=yf;
+            y=yp;
+            //Q7:The next level flower has 6 petals (circle), which means you should make it bloom from six different directions, and the difference between two neighboring directions is 60 degrees. 
+            drawcircle(nf-1,x,y,diameter*(1/2),FlineWidth-1)
+        }
+
+
+        function drawline(x0,y0,x1,y1,n,newlength){
+            //Q10 Set the color of the branch as a gradient. Please change the color when the height of the branch is less than 60 pixels.
+            if(newlength<60){
+            ctx.strokeStyle="#32CD32";//綠色
+            }else{
+            ctx.strokeStyle="#442525";//棕色
+            }
+            ctx.lineWidth = sumW(n);
+            ctx.beginPath();
+            ctx.moveTo(x0,y0);
+            ctx.lineTo(x1,y1);
+            ctx.stroke();
+        }
+
+        //Q3:And It (branch) is also getting thinner (child branch would be 2 pixels thinner than its parent)      
+        function sumW(n){
+            if( n == 1){
+                return 15 - (level-nf-1)*2; //因為是遞迴，所以要在等於1時輸出值
+            }else{
+                const sW = sumW(n-1)+2
+                return sW
+            }            
+        }
+
+        //Q2:The height of a child branch is 3/4 of its parent’s height (Hint: not the branch length!)
+        function sumH(n){
+            if( n == 1){
+                return 1; //因為是遞迴，所以要在等於1時輸出1
+            }else{
+                const sH = sumH(n-1)+Math.pow(3/4,n-1)
+                return sH
+            }
+        }
+        }
+        
+
+
+    </script>
+
+</body>
+
+</html>

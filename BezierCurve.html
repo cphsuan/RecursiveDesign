@@ -1,0 +1,255 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+  <body>    
+      <canvas id="canvas" width="500" height="500" style="box-shadow: 0px 0px 20px black;cursor:crosshair;">
+		瀏覽器如果不支援 canvas 元素
+      </canvas>
+      <script type="text/javascript">
+          //畫布宣告
+          var canvas = document.getElementById("canvas");//獲取畫布
+          var ctx = canvas.getContext("2d");//創建context
+          
+          //
+          var clicks = 0; //計算點擊次數
+          let isDrawing = false; // 判斷是否正在畫圖
+
+          //儲存點擊四點座標
+          let P0 = [{axisX:null, axisY:null}]
+          let P1 = [{axisX:null, axisY:null}]
+          let P2 = [{axisX:null, axisY:null}]
+          let P3 = [{axisX:null, axisY:null}]
+
+          //貝茲曲線點建立
+          Bp0 = new Object();
+          Bp0.axisX=null;
+          Bp0.axisY=null;
+
+          Bp1 = new Object();
+          Bp1.axisX=0;
+          Bp1.axisY=0;
+          
+          //定義被滑鼠選取的狀態
+          var selected = false;
+          var isP0 = false;
+          var isP1 = false;
+          var isP2 = false;
+          var isP3 = false;
+          
+          
+          //定義監聽事件
+          canvas.addEventListener('mousedown', canvasMouseDownHandler, false);
+          canvas.addEventListener('mousemove', canvasMouseMoveHandler, false);
+          canvas.addEventListener('mouseup', canvasMouseUpHandler, false);
+          canvas.addEventListener('mouseout', canvasMouseUpHandler, false);   
+          //特別加上 mouseout 是以防指標回來後，矩形會黏著它}
+
+
+                //定義 draw 物件  ===============================================
+                function draw(x, y){
+                    ctx.fillStyle = '#c00';
+                    ctx.beginPath();
+                    ctx.rect(x, y, 10, 10);
+                    ctx.fill();
+                    DrawOriginX = x;
+                    DrawOriginY = y;
+                }
+                //清除點
+                function cleardraw(evt){
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                //draw Bézier
+                function drawBezier(evt){
+                    if(selected=true){
+                        Bp0.axisX=null;
+                        Bp0.axisY=null;
+                    if (clicks>3 & Bp0['axisX'] != Bp1['axisX']){
+                            for (var t =0; t<=1;t+=0.0001){
+                                Bezier(t,P0,P1,P2,P3);
+                            if (Bp0['axisX'] == null){
+                                Bp0.axisX=Bp1.axisX;
+                                Bp0.axisY=Bp1.axisY;
+                            }else {
+                                ctx.lineWidth = 2;
+                                ctx.strokeStyle = 'red';
+                                ctx.beginPath();
+                                ctx.moveTo(Bp0['axisX']+5,Bp0['axisY']+5);
+                                ctx.lineTo(Bp1['axisX']+5,Bp1['axisY']+5);
+                                ctx.stroke();
+
+                                Bp0.axisX=Bp1.axisX;
+                                Bp0.axisY=Bp1.axisY;
+                                }
+                        }
+                    }
+                        selected = false;		//為變數設定值為 false 表示沒有選取矩形
+                        canvas.style.cursor = 'auto';				//還原鼠標
+                }
+                }
+          
+              //Bézier curve function
+                function Bezier(t,P0,P1,P2,P3){
+                    Bp1['axisX'] = P0['axisX']*Math.pow(1-t,3)+3*P1['axisX']*t*Math.pow(1-t,2)+3*P2['axisX']*Math.pow(t,2)*(1-t)+P3['axisX']*Math.pow(t,3);
+                    Bp1['axisY'] = P0['axisY']*Math.pow(1-t,3)+3*P1['axisY']*t*Math.pow(1-t,2)+3*P2['axisY']*Math.pow(t,2)*(1-t)+P3['axisY']*Math.pow(t,3);
+                    return Bp1 ;
+                }
+          
+                //定義 mousedown 事件處理函數  ===============================================
+                function canvasMouseDownHandler(evt){
+                    evt.preventDefault(); //取消預設行為
+                    
+                    console.log('pointerdown');
+                    clicks++;
+                    isDrawing = true;
+                    
+                    //取得滑鼠點擊位置canvas
+                    var coord = getPosition(evt);		
+
+                    //記錄滑鼠點擊位置，作為一個原始位置
+                    MouseOriginX = coord.x;
+                    MouseOriginY = coord.y;
+
+                    movePoint(evt);
+                    console.log(isP0);
+                    console.log(isP1);
+                    console.log(isP2);
+                    console.log(isP3);
+                    
+                }
+
+
+                //定義 mousemove 事件處理函數  ===============================================
+                function canvasMouseMoveHandler(evt){
+                    evt.preventDefault(); //取消預設行為
+                    console.log('pointermove');
+                    var coord = getPosition(evt);	//取得滑鼠點擊位置
+                    
+                    
+                    //檢測是否有選取到的物體，然後移動 物體 x、y 座標到滑鼠位置
+                    if(selected){
+                    //更新滑鼠原始位置
+                    MouseOriginX = coord.x;
+                    MouseOriginY = coord.y;      
+
+                    if (isP0 == true) {
+                        P0.axisX = MouseOriginX, P0.axisY = MouseOriginY;
+                    }else if(isP1 == true){
+                        P1.axisX = coord.x, P1.axisY = coord.y;
+                    }else if(isP2 == true){
+                        P2.axisX = coord.x, P2.axisY = coord.y;
+                    }else if(isP3 == true){
+                        P3.axisX = coord.x, P3.axisY = coord.y;
+                    }
+                     
+                    cleardraw(evt);
+                    draw(P0.axisX,P0.axisY);
+                    draw(P1.axisX,P1.axisY);
+                    draw(P2.axisX,P2.axisY);
+                    draw(P3.axisX,P3.axisY);    
+                    }
+                }
+
+
+                //定義 mouseup 事件處理函數  ===============================================
+                function canvasMouseUpHandler(evt){
+                    evt.preventDefault(); //取消預設行為
+                    console.log('pointerup');
+                    var coord = getPosition(evt);
+                    if (isDrawing & clicks<5) {
+                        draw(coord.x,coord.y);
+                        savePosition(coord.x,coord.y);
+                    }
+
+                    drawBezier(evt);
+                    
+                    isDrawing = false;
+                    isP0=false;
+                    isP1=false;
+                    isP2=false;
+                    isP3=false;
+                                
+                }
+
+
+                //用來計算座標位置並傳回 ===============================================
+                var getPosition = function(evt){
+                    var supportLayer = typeof evt.clientX == 'number';		//確定目前瀏覽器是否支援 layerX
+                    var target = evt.target ? evt.target : evt.srcElement;	//取得事件物件的 HTML 元素
+                    var rect = canvas.getBoundingClientRect(); //取得canvas 實際在網頁上的位置和寬高
+                    
+                    var x = (supportLayer ? evt.clientX : evt.x) - rect.left;
+                    var y = (supportLayer ? evt.clientY : evt.y) - rect.top;
+                    
+                    //回傳一個 Object，包含座標屬性
+                    return {x: x, y: y};				
+                };
+          
+                //儲存點位置 
+                function savePosition(x,y){
+                    if (clicks == 1){
+                        P0.axisX=x;
+                        P0.axisY=y;
+                        console.log(P0.axisX,P0.axisY);
+                    }else if(clicks == 2){
+                        P1.axisX=x;
+                        P1.axisY=y;
+                        console.log(P1.axisX,P1.axisY);
+                    }else if(clicks == 3){
+                        P2.axisX=x;
+                        P2.axisY=y;
+                        console.log(P2.axisX,P2.axisY);
+                    }else if(clicks == 4){
+                        P3.axisX=x;
+                        P3.axisY=y;
+                        console.log(P3.axisX,P3.axisY);
+                    }
+                }
+          //判斷哪個點移動
+          function movePoint(evt){
+             console.log(selected); 
+                    var coord = getPosition(evt);
+                     if(coord.x>P0.axisX & coord.x<P0.axisX+10 & coord.y>P0.axisY& coord.y<P0.axisY+10){
+                        selected = true;						//為變數設定值為 true 表示選取了矩形
+                        canvas.style.cursor = 'move';			//改變鼠標
+                        P0.axisX = coord.x, P0.axisY = coord.y;
+                        isP0 = true;
+                    }
+                    
+                     if(coord.x>P1.axisX & coord.x<P1.axisX+10 & coord.y>P1.axisY& coord.y<P1.axisY+10){
+                        
+                        selected = true;						//為變數設定值為 true 表示選取了矩形
+                        canvas.style.cursor = 'move';			//改變鼠標
+                        P1.axisX = coord.x, P1.axisY = coord.y;
+                         isP1 = true;
+                    }
+
+                     if(coord.x>P2.axisX & coord.x<P2.axisX+10 & coord.y>P2.axisY& coord.y<P2.axisY+10){
+                        
+                        selected = true;						//為變數設定值為 true 表示選取了矩形
+                        canvas.style.cursor = 'move';			//改變鼠標
+                        P2.axisX = coord.x, P2.axisY = coord.y;
+                         isP2 = true;
+                    }
+                    
+                     if(coord.x>P3.axisX & coord.x<P3.axisX+10 & coord.y>P3.axisY& coord.y<P3.axisY+10){
+                        
+                        selected = true;						//為變數設定值為 true 表示選取了矩形
+                        canvas.style.cursor = 'move';			//改變鼠標
+                        P3.axisX = coord.x, P3.axisY = coord.y;
+                         isP3 = true;
+                    }              
+          }
+          
+          
+            
+      </script>
+  </body>
+</html>
